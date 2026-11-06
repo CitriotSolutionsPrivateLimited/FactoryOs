@@ -41,10 +41,6 @@ const COLORS = {
 const SENSE_GROUP_KEY = 'cognisense-group';
 const INSIGHT_GROUP_KEY = 'cognivision-insight-group';
 
-const ComingSoon = ({ title }) => (
-    <div className="p-6 text-sm text-slate-500">{title} page is not built yet.</div>
-);
-
 /* Citriot logo for the sidebar. Falls back to a "C" badge if the image can't load. */
 const BrandLogo = () => {
     const [imgFailed, setImgFailed] = useState(false);
@@ -242,7 +238,6 @@ const Home = ({ path }) => {
 
                             {/* CogniVision Insight */}
                             <Route path="/cognivision-insight" element={<PrivateRoute><CognivisionInsight /></PrivateRoute>} />
-                            {/* Replace ComingSoon with your Model Train component when it's ready */}
                             <Route path="/cognivision-insight/modeltrain" element={<PrivateRoute><ModalTrain /></PrivateRoute>} />
 
                             <Route path="/agents-integrations" element={<PrivateRoute><AgentsIntegrations /></PrivateRoute>} />
