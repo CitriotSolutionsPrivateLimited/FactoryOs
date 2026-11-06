@@ -1,17 +1,15 @@
-import React, { useContext } from 'react';
+
+import React from 'react';
 import { Navigate } from 'react-router-dom';
-import useAuth from '../hooks/useAuth';
-import { RootContext } from '../context/RootContext';
 
 const PrivateRoute = ({ children }) => {
-  const isLoggedIn = useAuth();
-  const { logoutRedirect } = useContext(RootContext);
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
 
-  if (!isLoggedIn) {
-    return <Navigate to={logoutRedirect || "/login"} replace />;
-  }
+    if (!isLoggedIn) {
+        return <Navigate to="/login" replace />;
+    }
 
-  return <>{children}</>;
+    return children;
 };
 
 export default PrivateRoute;

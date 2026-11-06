@@ -85,34 +85,63 @@ export default function Login() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+      e.preventDefault();
 
-    const found = validate(values);
-    setErrors(found);
+      // Validate empty fields and email format
+      const found = validate(values);
+      setErrors(found);
 
-    if (Object.keys(found).length) return;
+      if (Object.keys(found).length > 0) {
+          return;
+      }
 
-    setLoading(true);
+      setLoading(true);
 
-    try {
-      // Replace this with your actual login API
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      try {
+          // Frontend login credentials
+          const ADMIN_EMAIL = "admin@citriot.com";
+          const ADMIN_PASSWORD = "admin2026";
 
-      // Save authentication details
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("firstName", values.email.split("@")[0]);
+          // Check username and password
+          if (
+              values.email.trim().toLowerCase() !== ADMIN_EMAIL ||
+              values.password !== ADMIN_PASSWORD
+          ) {
+              setErrors({
+                  form: "Invalid username or password. Please try again.",
+              });
 
-      setSuccess(true);
+              setLoading(false);
+              return;
+          }
 
-      // Navigate to dashboard
-      navigate("/home/dashboard", { replace: true });
-    } catch (error) {
-      setErrors({
-        form: "We couldn't sign you in. Check your details and try again.",
-      });
-    } finally {
-      setLoading(false);
-    }
+          // Save authentication details
+          localStorage.setItem("isLoggedIn", "true");
+          localStorage.setItem("firstName", "admin");
+
+          localStorage.setItem(
+              "user",
+              JSON.stringify({
+                  email: ADMIN_EMAIL,
+                  firstName: "admin",
+              })
+          );
+
+          // Show success
+          setSuccess(true);
+
+          // Navigate to dashboard
+          navigate("/home/dashboard", { replace: true });
+
+      } catch (error) {
+          console.error("Login error:", error);
+
+          setErrors({
+              form: "Unable to sign in. Please try again.",
+          });
+      } finally {
+          setLoading(false);
+      }
   };
 
   const inputBase =

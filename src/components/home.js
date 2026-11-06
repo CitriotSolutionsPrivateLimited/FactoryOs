@@ -12,6 +12,7 @@ import {
     FileTextOutlined,
     BarChartOutlined,
     ExperimentOutlined,
+    LogoutOutlined,
 } from '@ant-design/icons';
 import useScreenType from 'react-screentype-hook';
 import PrivateRoute from '../layouts/PrivateRoute';
@@ -27,6 +28,9 @@ import ModalTrain from './cognivision/modalTrain';
 const { Content, Sider } = Layout;
 
 const LOGO_SRC = '/citriotlogo.jpeg'; // file must be in your /public folder
+
+// Route of your login page
+const LOGIN_PATH = '/login';
 
 // Colours match the Overview page (CogniSense teal, Inspect amber, Insight violet)
 const COLORS = {
@@ -72,6 +76,29 @@ const Home = ({ path }) => {
     const screenType = useScreenType();
     const navigate = useNavigate();
     const location = useLocation();
+
+    const performLogout = () => {
+        // Clear login session
+        const keysToRemove = [
+            'token',
+            'accessToken',
+            'refreshToken',
+            'authToken',
+            'user',
+            'isLoggedIn',
+            'firstName'
+        ];
+
+        keysToRemove.forEach((key) => {
+            localStorage.removeItem(key);
+            sessionStorage.removeItem(key);
+        });
+
+        message.success('Logged out successfully');
+
+        // Redirect directly to login
+        navigate('/login', { replace: true });
+    };
 
     function getItem(label, key, icon, children, className) {
         return { key, icon, children, label, className };
@@ -164,6 +191,18 @@ const Home = ({ path }) => {
                 .factory-menu.ant-menu-inline-collapsed > .ant-menu-submenu > .ant-menu-submenu-title {
                     padding-inline: calc(50% - 8px);
                 }
+
+                /* Logout button pinned at the bottom of the sidebar */
+                .logout-btn {
+                    display: flex; align-items: center; gap: 10px;
+                    width: 100%; height: 40px; padding: 0 16px;
+                    border: 0; border-radius: 8px; background: transparent;
+                    color: #475569; font-size: 13.5px; cursor: pointer;
+                    transition: background 0.15s, color 0.15s;
+                }
+                .logout-btn:hover { background: #fef2f2; color: #dc2626; }
+                .logout-btn.is-collapsed { justify-content: center; padding: 0; }
+                .logout-btn .anticon { font-size: 16px; }
             `}</style>
 
             <Layout>
@@ -186,7 +225,8 @@ const Home = ({ path }) => {
                             borderRight: '1px solid #e2e8f0',
                         }}
                     >
-                        <div className="flex min-h-full flex-col px-2 pb-2">
+                        {/* pb-14 leaves room for the collapse trigger that antd draws at the very bottom */}
+                        <div className="flex min-h-full flex-col px-2 pb-4">
                             {/* Brand block */}
                             <div className={`flex items-center gap-2.5 px-2 pb-4 pt-2 ${collapsed ? 'justify-center' : ''}`}>
                                 <BrandLogo />
@@ -211,6 +251,19 @@ const Home = ({ path }) => {
                                 defaultSelectedKeys={['/home/dashboard']}
                                 items={items}
                             />
+
+                            {/* Logout – pushed to the bottom with mt-auto */}
+                            <div className="mt-auto border-t border-slate-200 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={performLogout}
+                                    title="Logout"
+                                    className={`logout-btn ${collapsed ? 'is-collapsed' : ''}`}
+                                >
+                                    <LogoutOutlined />
+                                    {!collapsed && <span>Logout</span>}
+                                </button>
+                            </div>
                         </div>
                     </Sider>
 
@@ -227,20 +280,82 @@ const Home = ({ path }) => {
                         }}
                     >
                         <Routes>
-                            <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+                            {/* Dashboard */}
+                            <Route
+                                path="dashboard"
+                                element={
+                                    <PrivateRoute>
+                                        <Dashboard />
+                                    </PrivateRoute>
+                                }
+                            />
 
                             {/* CogniSense */}
-                            <Route path="/cognisense" element={<PrivateRoute><Cognisense /></PrivateRoute>} />
-                            <Route path="/cognisense/addmachine" element={<PrivateRoute><AddMachine /></PrivateRoute>} />
-                            <Route path="/cognisense/workorder" element={<PrivateRoute><WordOrder /></PrivateRoute>} />
+                            <Route
+                                path="cognisense"
+                                element={
+                                    <PrivateRoute>
+                                        <Cognisense />
+                                    </PrivateRoute>
+                                }
+                            />
 
-                            <Route path="/cognivision-inspect" element={<PrivateRoute><CognivisionInspect /></PrivateRoute>} />
+                            <Route
+                                path="cognisense/addmachine"
+                                element={
+                                    <PrivateRoute>
+                                        <AddMachine />
+                                    </PrivateRoute>
+                                }
+                            />
+
+                            <Route
+                                path="cognisense/workorder"
+                                element={
+                                    <PrivateRoute>
+                                        <WordOrder />
+                                    </PrivateRoute>
+                                }
+                            />
+
+                            {/* CogniVision Inspect */}
+                            <Route
+                                path="cognivision-inspect"
+                                element={
+                                    <PrivateRoute>
+                                        <CognivisionInspect />
+                                    </PrivateRoute>
+                                }
+                            />
 
                             {/* CogniVision Insight */}
-                            <Route path="/cognivision-insight" element={<PrivateRoute><CognivisionInsight /></PrivateRoute>} />
-                            <Route path="/cognivision-insight/modeltrain" element={<PrivateRoute><ModalTrain /></PrivateRoute>} />
+                            <Route
+                                path="cognivision-insight"
+                                element={
+                                    <PrivateRoute>
+                                        <CognivisionInsight />
+                                    </PrivateRoute>
+                                }
+                            />
 
-                            <Route path="/agents-integrations" element={<PrivateRoute><AgentsIntegrations /></PrivateRoute>} />
+                            <Route
+                                path="cognivision-insight/modeltrain"
+                                element={
+                                    <PrivateRoute>
+                                        <ModalTrain />
+                                    </PrivateRoute>
+                                }
+                            />
+
+                            {/* Agents and Integrations */}
+                            <Route
+                                path="agents-integrations"
+                                element={
+                                    <PrivateRoute>
+                                        <AgentsIntegrations />
+                                    </PrivateRoute>
+                                }
+                            />
                         </Routes>
                     </Content>
                 </Layout>
