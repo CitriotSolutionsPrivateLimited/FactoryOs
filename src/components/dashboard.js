@@ -5,6 +5,8 @@
  * Install:  npm i @ant-design/icons   (Tailwind v3 must already be set up)
  * Use:      import Overview from "./Overview";  then render <Overview /> inside your Dashboard page
  * Note:     the file contains JSX. With Vite, name it Overview.jsx. Create React App accepts Overview.js.
+ *
+ * Site: TIEI, divided into Station 1, Station 2, Station 3 and Station 4.
  */
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -23,6 +25,13 @@ import {
   SearchOutlined,
   SendOutlined
 } from "@ant-design/icons";
+
+/* ======================================================================
+   Site structure
+   ====================================================================== */
+const SITE = "TIEI";
+const ALL = "All stations";
+const STATIONS = ["Station 1", "Station 2", "Station 3", "Station 4"];
 
 /* ======================================================================
    Formatting helpers
@@ -46,6 +55,8 @@ const signed = (n, dec = 0) => {
    ====================================================================== */
 // Sample data for layout review. Replace with your API responses.
 // All numeric fields are real numbers (no string parsing needed).
+// The "plant" field of every record holds the station it belongs to
+// ("Station 1" ... "Station 4") or "All stations" for site-wide items.
 
 const data = {
   kpis: [
@@ -76,9 +87,9 @@ const data = {
 
   integrations: [
     { system: "Citriot sensor nodes", direction: "Backward", product: "CogniSense", protocol: "MQTT", status: "OK", last_sync_min: 1, latency_ms: 120, records_24h: 2910000 },
-    { system: "Siemens S7 PLCs (Hosur)", direction: "Backward", product: "CogniSense", protocol: "OPC-UA", status: "OK", last_sync_min: 2, latency_ms: 85, records_24h: 860000 },
-    { system: "Rockwell PLCs (Chakan)", direction: "Backward", product: "CogniSense", protocol: "OPC-UA", status: "OK", last_sync_min: 2, latency_ms: 92, records_24h: 640000 },
-    { system: "HVAC BMS (Dubai JAFZA)", direction: "Backward", product: "CogniSense", protocol: "Modbus TCP", status: "Degraded", last_sync_min: 18, latency_ms: 410, records_24h: 42000 },
+    { system: "Siemens S7 PLCs (Station 1)", direction: "Backward", product: "CogniSense", protocol: "OPC-UA", status: "OK", last_sync_min: 2, latency_ms: 85, records_24h: 860000 },
+    { system: "Rockwell PLCs (Station 2)", direction: "Backward", product: "CogniSense", protocol: "OPC-UA", status: "OK", last_sync_min: 2, latency_ms: 92, records_24h: 640000 },
+    { system: "HVAC BMS (Station 3)", direction: "Backward", product: "CogniSense", protocol: "Modbus TCP", status: "Degraded", last_sync_min: 18, latency_ms: 410, records_24h: 42000 },
     { system: "SCADA historian", direction: "Backward", product: "CogniSense", protocol: "SQL", status: "OK", last_sync_min: 5, latency_ms: 160, records_24h: 1200000 },
     { system: "Machine-vision cameras (Inspect)", direction: "Backward", product: "CogniVision Inspect", protocol: "GigE Vision", status: "OK", last_sync_min: 0, latency_ms: 34, records_24h: 184260 },
     { system: "CCTV / NVR (Insight)", direction: "Backward", product: "CogniVision Insight", protocol: "RTSP", status: "OK", last_sync_min: 0, latency_ms: 210, records_24h: 236 },
@@ -93,26 +104,26 @@ const data = {
   ],
 
   triage: [
-    { rank: 1, asset: "Compressor C-204", plant: "Hosur", fault: "Outer race bearing defect", iso_zone: "D", rul_days: 9, lead_time_days: 14, criticality: "A", risk_score: 94, evidence: "BPFO at 3.2x shaft speed rose 41% in 14 days; velocity 7.8 mm/s (Zone D)" },
-    { rank: 2, asset: "Cooling tower fan CT-3", plant: "Hosur", fault: "Imbalance", iso_zone: "C", rul_days: 21, lead_time_days: 7, criticality: "A", risk_score: 82, evidence: "1x radial amplitude up 2.3x since blade clean on 12 Oct" },
-    { rank: 3, asset: "Hydraulic pump HP-11", plant: "Chakan", fault: "Cavitation", iso_zone: "C", rul_days: 18, lead_time_days: 21, criticality: "A", risk_score: 80, evidence: "Broadband noise 2-5 kHz; suction pressure 0.3 bar below spec" },
-    { rank: 4, asset: "Main spindle motor SM-07", plant: "Chakan", fault: "Misalignment", iso_zone: "C", rul_days: 30, lead_time_days: 10, criticality: "A", risk_score: 71, evidence: "2x axial 180 deg phase shift across coupling" },
-    { rank: 5, asset: "AHU-2 supply fan", plant: "Dubai JAFZA", fault: "Belt wear", iso_zone: "C", rul_days: 14, lead_time_days: 5, criticality: "B", risk_score: 66, evidence: "Belt frequency sidebands; motor current ripple 6%" },
-    { rank: 6, asset: "Chiller compressor CH-1", plant: "Dubai JAFZA", fault: "Inner race defect", iso_zone: "C", rul_days: 27, lead_time_days: 28, criticality: "A", risk_score: 65, evidence: "BPFI harmonics with 1x sidebands; oil Fe ppm 34" },
-    { rank: 7, asset: "Conveyor gearbox GB-18", plant: "Hosur", fault: "Gear mesh wear", iso_zone: "B", rul_days: 45, lead_time_days: 21, criticality: "B", risk_score: 52, evidence: "GMF sidebands growing; temperature +6 C vs baseline" },
-    { rank: 8, asset: "Exhaust blower EB-5", plant: "Chakan", fault: "Looseness", iso_zone: "B", rul_days: 38, lead_time_days: 7, criticality: "B", risk_score: 47, evidence: "Sub-harmonics 0.5x present; mount bolt torque flagged" },
-    { rank: 9, asset: "Coolant pump CP-22", plant: "Hosur", fault: "Cavitation", iso_zone: "B", rul_days: 52, lead_time_days: 14, criticality: "B", risk_score: 41, evidence: "Random high-frequency bursts correlate with low tank level" },
-    { rank: 10, asset: "Boiler feed pump BFP-2", plant: "Chakan", fault: "Imbalance", iso_zone: "B", rul_days: 60, lead_time_days: 21, criticality: "B", risk_score: 37, evidence: "1x radial trending up 12% per week" },
+    { rank: 1, asset: "Compressor C-204", plant: "Station 1", fault: "Outer race bearing defect", iso_zone: "D", rul_days: 9, lead_time_days: 14, criticality: "A", risk_score: 94, evidence: "BPFO at 3.2x shaft speed rose 41% in 14 days; velocity 7.8 mm/s (Zone D)" },
+    { rank: 2, asset: "Cooling tower fan CT-3", plant: "Station 2", fault: "Imbalance", iso_zone: "C", rul_days: 21, lead_time_days: 7, criticality: "A", risk_score: 82, evidence: "1x radial amplitude up 2.3x since blade clean on 12 Oct" },
+    { rank: 3, asset: "Hydraulic pump HP-11", plant: "Station 3", fault: "Cavitation", iso_zone: "C", rul_days: 18, lead_time_days: 21, criticality: "A", risk_score: 80, evidence: "Broadband noise 2-5 kHz; suction pressure 0.3 bar below spec" },
+    { rank: 4, asset: "Main spindle motor SM-07", plant: "Station 4", fault: "Misalignment", iso_zone: "C", rul_days: 30, lead_time_days: 10, criticality: "A", risk_score: 71, evidence: "2x axial 180 deg phase shift across coupling" },
+    { rank: 5, asset: "AHU-2 supply fan", plant: "Station 3", fault: "Belt wear", iso_zone: "C", rul_days: 14, lead_time_days: 5, criticality: "B", risk_score: 66, evidence: "Belt frequency sidebands; motor current ripple 6%" },
+    { rank: 6, asset: "Chiller compressor CH-1", plant: "Station 4", fault: "Inner race defect", iso_zone: "C", rul_days: 27, lead_time_days: 28, criticality: "A", risk_score: 65, evidence: "BPFI harmonics with 1x sidebands; oil Fe ppm 34" },
+    { rank: 7, asset: "Conveyor gearbox GB-18", plant: "Station 1", fault: "Gear mesh wear", iso_zone: "B", rul_days: 45, lead_time_days: 21, criticality: "B", risk_score: 52, evidence: "GMF sidebands growing; temperature +6 C vs baseline" },
+    { rank: 8, asset: "Exhaust blower EB-5", plant: "Station 2", fault: "Looseness", iso_zone: "B", rul_days: 38, lead_time_days: 7, criticality: "B", risk_score: 47, evidence: "Sub-harmonics 0.5x present; mount bolt torque flagged" },
+    { rank: 9, asset: "Coolant pump CP-22", plant: "Station 3", fault: "Cavitation", iso_zone: "B", rul_days: 52, lead_time_days: 14, criticality: "B", risk_score: 41, evidence: "Random high-frequency bursts correlate with low tank level" },
+    { rank: 10, asset: "Boiler feed pump BFP-2", plant: "Station 4", fault: "Imbalance", iso_zone: "B", rul_days: 60, lead_time_days: 21, criticality: "B", risk_score: 37, evidence: "1x radial trending up 12% per week" },
   ],
 
   inspect_lines: [
-    { line: "Line 1 Cylinder head", plant: "Hosur", part: "Cylinder head", inspected_24h: 8420, defect_rate: 0.72, model_version: "v4.2", model_accuracy: 99.1, drift: "Low", yield: 99.28, status: "OK" },
-    { line: "Line 2 Crankcase", plant: "Hosur", part: "Crankcase", inspected_24h: 6180, defect_rate: 1.42, model_version: "v3.9", model_accuracy: 98.4, drift: "Medium", yield: 98.58, status: "Watch" },
-    { line: "Line 3 Brake disc", plant: "Chakan", part: "Brake disc", inspected_24h: 11240, defect_rate: 0.66, model_version: "v5.0", model_accuracy: 99.3, drift: "Low", yield: 99.34, status: "OK" },
-    { line: "Line 4 Piston", plant: "Chakan", part: "Piston", inspected_24h: 14360, defect_rate: 1.4, model_version: "v4.6", model_accuracy: 98.9, drift: "High", yield: 98.6, status: "Retrain" },
-    { line: "Line 5 Gear blank", plant: "Chakan", part: "Gear blank", inspected_24h: 5120, defect_rate: 0.43, model_version: "v2.8", model_accuracy: 99.0, drift: "Low", yield: 99.57, status: "OK" },
-    { line: "Line 6 Bottle cap", plant: "Dubai JAFZA", part: "Closure", inspected_24h: 91000, defect_rate: 0.35, model_version: "v6.1", model_accuracy: 99.6, drift: "Low", yield: 99.65, status: "OK" },
-    { line: "Line 7 Label", plant: "Dubai JAFZA", part: "Label", inspected_24h: 47940, defect_rate: 0.26, model_version: "v3.3", model_accuracy: 98.7, drift: "Medium", yield: 99.74, status: "Watch" },
+    { line: "Line 1 Cylinder head", plant: "Station 1", part: "Cylinder head", inspected_24h: 8420, defect_rate: 0.72, model_version: "v4.2", model_accuracy: 99.1, drift: "Low", yield: 99.28, status: "OK" },
+    { line: "Line 2 Crankcase", plant: "Station 1", part: "Crankcase", inspected_24h: 6180, defect_rate: 1.42, model_version: "v3.9", model_accuracy: 98.4, drift: "Medium", yield: 98.58, status: "Watch" },
+    { line: "Line 3 Brake disc", plant: "Station 2", part: "Brake disc", inspected_24h: 11240, defect_rate: 0.66, model_version: "v5.0", model_accuracy: 99.3, drift: "Low", yield: 99.34, status: "OK" },
+    { line: "Line 4 Piston", plant: "Station 4", part: "Piston", inspected_24h: 14360, defect_rate: 1.4, model_version: "v4.6", model_accuracy: 98.9, drift: "High", yield: 98.6, status: "Retrain" },
+    { line: "Line 5 Gear blank", plant: "Station 2", part: "Gear blank", inspected_24h: 5120, defect_rate: 0.43, model_version: "v2.8", model_accuracy: 99.0, drift: "Low", yield: 99.57, status: "OK" },
+    { line: "Line 6 Bottle cap", plant: "Station 3", part: "Closure", inspected_24h: 91000, defect_rate: 0.35, model_version: "v6.1", model_accuracy: 99.6, drift: "Low", yield: 99.65, status: "OK" },
+    { line: "Line 7 Label", plant: "Station 3", part: "Label", inspected_24h: 47940, defect_rate: 0.26, model_version: "v3.3", model_accuracy: 98.7, drift: "Medium", yield: 99.74, status: "Watch" },
   ],
 
   inspect_defects: [
@@ -127,45 +138,45 @@ const data = {
   ],
 
   insight_areas: [
-    { area: "Machining bay A", plant: "Hosur", cameras: 24, ppe_compliance: 97.2, sop_compliance: 95.1, intrusions_7d: 2, near_misses_7d: 1, idle_minutes_7d: 340, status: "OK" },
-    { area: "Assembly line 2", plant: "Hosur", cameras: 18, ppe_compliance: 94.8, sop_compliance: 92.6, intrusions_7d: 4, near_misses_7d: 3, idle_minutes_7d: 610, status: "Watch" },
-    { area: "Dispatch yard", plant: "Hosur", cameras: 12, ppe_compliance: 89.5, sop_compliance: 88.0, intrusions_7d: 7, near_misses_7d: 5, idle_minutes_7d: 220, status: "Alert" },
-    { area: "Press shop", plant: "Chakan", cameras: 20, ppe_compliance: 96.1, sop_compliance: 94.4, intrusions_7d: 1, near_misses_7d: 2, idle_minutes_7d: 415, status: "OK" },
-    { area: "Paint shop", plant: "Chakan", cameras: 14, ppe_compliance: 98.4, sop_compliance: 96.8, intrusions_7d: 0, near_misses_7d: 0, idle_minutes_7d: 180, status: "OK" },
-    { area: "Warehouse", plant: "Chakan", cameras: 22, ppe_compliance: 91.3, sop_compliance: 90.2, intrusions_7d: 5, near_misses_7d: 4, idle_minutes_7d: 520, status: "Watch" },
-    { area: "Filling hall", plant: "Dubai JAFZA", cameras: 16, ppe_compliance: 98.9, sop_compliance: 97.5, intrusions_7d: 0, near_misses_7d: 1, idle_minutes_7d: 95, status: "OK" },
-    { area: "Loading dock", plant: "Dubai JAFZA", cameras: 10, ppe_compliance: 93.0, sop_compliance: 91.1, intrusions_7d: 3, near_misses_7d: 2, idle_minutes_7d: 260, status: "Watch" },
+    { area: "Machining bay A", plant: "Station 1", cameras: 24, ppe_compliance: 97.2, sop_compliance: 95.1, intrusions_7d: 2, near_misses_7d: 1, idle_minutes_7d: 340, status: "OK" },
+    { area: "Assembly line 2", plant: "Station 2", cameras: 18, ppe_compliance: 94.8, sop_compliance: 92.6, intrusions_7d: 4, near_misses_7d: 3, idle_minutes_7d: 610, status: "Watch" },
+    { area: "Dispatch yard", plant: "Station 1", cameras: 12, ppe_compliance: 89.5, sop_compliance: 88.0, intrusions_7d: 7, near_misses_7d: 5, idle_minutes_7d: 220, status: "Alert" },
+    { area: "Press shop", plant: "Station 2", cameras: 20, ppe_compliance: 96.1, sop_compliance: 94.4, intrusions_7d: 1, near_misses_7d: 2, idle_minutes_7d: 415, status: "OK" },
+    { area: "Paint shop", plant: "Station 3", cameras: 14, ppe_compliance: 98.4, sop_compliance: 96.8, intrusions_7d: 0, near_misses_7d: 0, idle_minutes_7d: 180, status: "OK" },
+    { area: "Warehouse", plant: "Station 4", cameras: 22, ppe_compliance: 91.3, sop_compliance: 90.2, intrusions_7d: 5, near_misses_7d: 4, idle_minutes_7d: 520, status: "Watch" },
+    { area: "Filling hall", plant: "Station 3", cameras: 16, ppe_compliance: 98.9, sop_compliance: 97.5, intrusions_7d: 0, near_misses_7d: 1, idle_minutes_7d: 95, status: "OK" },
+    { area: "Loading dock", plant: "Station 4", cameras: 10, ppe_compliance: 93.0, sop_compliance: 91.1, intrusions_7d: 3, near_misses_7d: 2, idle_minutes_7d: 260, status: "Watch" },
   ],
 
   rootcause: [
-    { link_id: "RC-014", plant: "Chakan", signal_a: "Line 4 Piston dimensional defects", product_a: "CogniVision Inspect", signal_b: "Main spindle motor SM-07 2x axial vibration", product_b: "CogniSense", correlation: 0.81, finding: "Defect spikes follow spindle misalignment within one shift; alignment WO-3115 approved", status: "Linked to WO-3115" },
-    { link_id: "RC-015", plant: "Hosur", signal_a: "Line 2 Crankcase surface scratches", product_a: "CogniVision Inspect", signal_b: "Conveyor gearbox GB-18 mesh wear", product_b: "CogniSense", correlation: 0.64, finding: "Scratch rate rises with conveyor speed variance; gearbox inspection pending", status: "Under review" },
-    { link_id: "RC-016", plant: "Hosur", signal_a: "Dispatch yard forklift near-misses", product_a: "CogniVision Insight", signal_b: "Shift change 14:00 footfall peak", product_b: "CogniVision Insight", correlation: 0.72, finding: "80% of near-misses within 20 min of shift change; staggered start proposed", status: "Proposed" },
-    { link_id: "RC-017", plant: "Dubai JAFZA", signal_a: "Line 6 cap misalignment", product_a: "CogniVision Inspect", signal_b: "AHU-2 supply fan belt wear (hall humidity)", product_b: "CogniSense", correlation: 0.58, finding: "Humidity drift in filling hall tracks AHU-2 degradation; belt WO-3114 approved", status: "Linked to WO-3114" },
+    { link_id: "RC-014", plant: "Station 4", signal_a: "Line 4 Piston dimensional defects", product_a: "CogniVision Inspect", signal_b: "Main spindle motor SM-07 2x axial vibration", product_b: "CogniSense", correlation: 0.81, finding: "Defect spikes follow spindle misalignment within one shift; alignment WO-3115 approved", status: "Linked to WO-3115" },
+    { link_id: "RC-015", plant: "Station 1", signal_a: "Line 2 Crankcase surface scratches", product_a: "CogniVision Inspect", signal_b: "Conveyor gearbox GB-18 mesh wear", product_b: "CogniSense", correlation: 0.64, finding: "Scratch rate rises with conveyor speed variance; gearbox inspection pending", status: "Under review" },
+    { link_id: "RC-016", plant: "Station 1", signal_a: "Dispatch yard forklift near-misses", product_a: "CogniVision Insight", signal_b: "Shift change 14:00 footfall peak", product_b: "CogniVision Insight", correlation: 0.72, finding: "80% of near-misses within 20 min of shift change; staggered start proposed", status: "Proposed" },
+    { link_id: "RC-017", plant: "Station 3", signal_a: "Line 6 cap misalignment", product_a: "CogniVision Inspect", signal_b: "AHU-2 supply fan belt wear (hall humidity)", product_b: "CogniSense", correlation: 0.58, finding: "Humidity drift in filling hall tracks AHU-2 degradation; belt WO-3114 approved", status: "Linked to WO-3114" },
   ],
 
   proposals: [
-    { id: "WO-3118", product: "CogniSense", agent: "Work-order agent", asset: "Compressor C-204", plant: "Hosur", action: "Replace DE bearing 6314; align; LOTO", target_system: "SAP PM", status: "Pending", created: "2026-11-05" },
-    { id: "PR-0442", product: "CogniSense", agent: "Spares agent", asset: "Compressor C-204", plant: "Hosur", action: "Purchase request 2x SKF 6314 bearings", target_system: "SAP MM", status: "Pending", created: "2026-11-05" },
-    { id: "SCH-0211", product: "CogniSense", agent: "Scheduling agent", asset: "Compressor C-204", plant: "Hosur", action: "Maintenance window Sat 08 Nov 06:00-14:00", target_system: "MES", status: "Pending", created: "2026-11-05" },
-    { id: "NCR-0871", product: "CogniVision Inspect", agent: "Quality agent", asset: "Line 4 Piston", plant: "Chakan", action: "Raise NCR for porosity batch 2411-P04; hold 240 units", target_system: "SAP QM", status: "Pending", created: "2026-11-05" },
-    { id: "RT-0192", product: "CogniVision Inspect", agent: "Quality agent", asset: "Line 4 Piston", plant: "Chakan", action: "Retrain porosity model; 312 new labelled samples", target_system: "CogniVision Inspect", status: "Pending", created: "2026-11-05" },
-    { id: "EHS-0334", product: "CogniVision Insight", agent: "Safety agent", asset: "Dispatch yard", plant: "Hosur", action: "EHS ticket: 5 forklift near-misses; propose staggered shift start", target_system: "EHS ticketing", status: "Pending", created: "2026-11-05" },
-    { id: "EHS-0333", product: "CogniVision Insight", agent: "Safety agent", asset: "Warehouse", plant: "Chakan", action: "EHS ticket: PPE compliance 91.3%; toolbox talk", target_system: "EHS ticketing", status: "Pending", created: "2026-11-04" },
-    { id: "WO-3117", product: "CogniSense", agent: "Work-order agent", asset: "Cooling tower fan CT-3", plant: "Hosur", action: "Dynamic balancing; inspect blade erosion", target_system: "SAP PM", status: "Pending", created: "2026-11-04" },
-    { id: "WO-3116", product: "CogniSense", agent: "Work-order agent", asset: "Hydraulic pump HP-11", plant: "Chakan", action: "Check suction strainer; verify NPSH", target_system: "Maximo", status: "Approved", created: "2026-11-04" },
-    { id: "PR-0441", product: "CogniSense", agent: "Spares agent", asset: "Hydraulic pump HP-11", plant: "Chakan", action: "Purchase request impeller kit", target_system: "SAP MM", status: "Pending", created: "2026-11-04" },
-    { id: "NCR-0870", product: "CogniVision Inspect", agent: "Quality agent", asset: "Line 2 Crankcase", plant: "Hosur", action: "Raise NCR for surface scratches; inspect conveyor guide", target_system: "SAP QM", status: "Approved", created: "2026-11-04" },
-    { id: "WO-3115", product: "CogniSense", agent: "Work-order agent", asset: "Main spindle motor SM-07", plant: "Chakan", action: "Laser alignment; check coupling", target_system: "Maximo", status: "Approved", created: "2026-11-03" },
-    { id: "WO-3114", product: "CogniSense", agent: "Work-order agent", asset: "AHU-2 supply fan", plant: "Dubai JAFZA", action: "Replace drive belts; tension check", target_system: "Fiix", status: "Approved", created: "2026-11-03" },
-    { id: "SCH-0210", product: "CogniSense", agent: "Scheduling agent", asset: "AHU-2 supply fan", plant: "Dubai JAFZA", action: "Maintenance window Thu 06 Nov 22:00-02:00", target_system: "MES", status: "Approved", created: "2026-11-03" },
-    { id: "EHS-0332", product: "CogniVision Insight", agent: "Safety agent", asset: "Assembly line 2", plant: "Hosur", action: "EHS ticket: zone intrusion x4; relocate barrier", target_system: "EHS ticketing", status: "Executed", created: "2026-11-03" },
-    { id: "WO-3113", product: "CogniSense", agent: "Work-order agent", asset: "Chiller compressor CH-1", plant: "Dubai JAFZA", action: "Bearing inspection; oil analysis", target_system: "Fiix", status: "Pending", created: "2026-11-02" },
-    { id: "PR-0440", product: "CogniSense", agent: "Spares agent", asset: "Chiller compressor CH-1", plant: "Dubai JAFZA", action: "Purchase request bearing set", target_system: "SAP MM", status: "Rejected", created: "2026-11-02" },
-    { id: "RT-0191", product: "CogniVision Inspect", agent: "Quality agent", asset: "Line 7 Label", plant: "Dubai JAFZA", action: "Recalibrate label skew threshold after reel change", target_system: "CogniVision Inspect", status: "Executed", created: "2026-11-02" },
-    { id: "WO-3112", product: "CogniSense", agent: "Work-order agent", asset: "Conveyor gearbox GB-18", plant: "Hosur", action: "Oil change; gear inspection", target_system: "SAP PM", status: "Approved", created: "2026-11-01" },
-    { id: "WO-3111", product: "CogniSense", agent: "Work-order agent", asset: "Exhaust blower EB-5", plant: "Chakan", action: "Tighten foundation bolts; re-check", target_system: "Maximo", status: "Approved", created: "2026-10-31" },
-    { id: "REP-0098", product: "Factory OS", agent: "Reporting agent", asset: "All assets", plant: "All plants", action: "October reliability quality safety and ESG report", target_system: "Email", status: "Executed", created: "2026-11-01" },
+    { id: "WO-3118", product: "CogniSense", agent: "Work-order agent", asset: "Compressor C-204", plant: "Station 1", action: "Replace DE bearing 6314; align; LOTO", target_system: "SAP PM", status: "Pending", created: "2026-11-05" },
+    { id: "PR-0442", product: "CogniSense", agent: "Spares agent", asset: "Compressor C-204", plant: "Station 1", action: "Purchase request 2x SKF 6314 bearings", target_system: "SAP MM", status: "Pending", created: "2026-11-05" },
+    { id: "SCH-0211", product: "CogniSense", agent: "Scheduling agent", asset: "Compressor C-204", plant: "Station 1", action: "Maintenance window Sat 08 Nov 06:00-14:00", target_system: "MES", status: "Pending", created: "2026-11-05" },
+    { id: "NCR-0871", product: "CogniVision Inspect", agent: "Quality agent", asset: "Line 4 Piston", plant: "Station 4", action: "Raise NCR for porosity batch 2411-P04; hold 240 units", target_system: "SAP QM", status: "Pending", created: "2026-11-05" },
+    { id: "RT-0192", product: "CogniVision Inspect", agent: "Quality agent", asset: "Line 4 Piston", plant: "Station 4", action: "Retrain porosity model; 312 new labelled samples", target_system: "CogniVision Inspect", status: "Pending", created: "2026-11-05" },
+    { id: "EHS-0334", product: "CogniVision Insight", agent: "Safety agent", asset: "Dispatch yard", plant: "Station 1", action: "EHS ticket: 5 forklift near-misses; propose staggered shift start", target_system: "EHS ticketing", status: "Pending", created: "2026-11-05" },
+    { id: "EHS-0333", product: "CogniVision Insight", agent: "Safety agent", asset: "Warehouse", plant: "Station 4", action: "EHS ticket: PPE compliance 91.3%; toolbox talk", target_system: "EHS ticketing", status: "Pending", created: "2026-11-04" },
+    { id: "WO-3117", product: "CogniSense", agent: "Work-order agent", asset: "Cooling tower fan CT-3", plant: "Station 2", action: "Dynamic balancing; inspect blade erosion", target_system: "SAP PM", status: "Pending", created: "2026-11-04" },
+    { id: "WO-3116", product: "CogniSense", agent: "Work-order agent", asset: "Hydraulic pump HP-11", plant: "Station 3", action: "Check suction strainer; verify NPSH", target_system: "Maximo", status: "Approved", created: "2026-11-04" },
+    { id: "PR-0441", product: "CogniSense", agent: "Spares agent", asset: "Hydraulic pump HP-11", plant: "Station 3", action: "Purchase request impeller kit", target_system: "SAP MM", status: "Pending", created: "2026-11-04" },
+    { id: "NCR-0870", product: "CogniVision Inspect", agent: "Quality agent", asset: "Line 2 Crankcase", plant: "Station 1", action: "Raise NCR for surface scratches; inspect conveyor guide", target_system: "SAP QM", status: "Approved", created: "2026-11-04" },
+    { id: "WO-3115", product: "CogniSense", agent: "Work-order agent", asset: "Main spindle motor SM-07", plant: "Station 4", action: "Laser alignment; check coupling", target_system: "Maximo", status: "Approved", created: "2026-11-03" },
+    { id: "WO-3114", product: "CogniSense", agent: "Work-order agent", asset: "AHU-2 supply fan", plant: "Station 3", action: "Replace drive belts; tension check", target_system: "Fiix", status: "Approved", created: "2026-11-03" },
+    { id: "SCH-0210", product: "CogniSense", agent: "Scheduling agent", asset: "AHU-2 supply fan", plant: "Station 3", action: "Maintenance window Thu 06 Nov 22:00-02:00", target_system: "MES", status: "Approved", created: "2026-11-03" },
+    { id: "EHS-0332", product: "CogniVision Insight", agent: "Safety agent", asset: "Assembly line 2", plant: "Station 2", action: "EHS ticket: zone intrusion x4; relocate barrier", target_system: "EHS ticketing", status: "Executed", created: "2026-11-03" },
+    { id: "WO-3113", product: "CogniSense", agent: "Work-order agent", asset: "Chiller compressor CH-1", plant: "Station 4", action: "Bearing inspection; oil analysis", target_system: "Fiix", status: "Pending", created: "2026-11-02" },
+    { id: "PR-0440", product: "CogniSense", agent: "Spares agent", asset: "Chiller compressor CH-1", plant: "Station 4", action: "Purchase request bearing set", target_system: "SAP MM", status: "Rejected", created: "2026-11-02" },
+    { id: "RT-0191", product: "CogniVision Inspect", agent: "Quality agent", asset: "Line 7 Label", plant: "Station 3", action: "Recalibrate label skew threshold after reel change", target_system: "CogniVision Inspect", status: "Executed", created: "2026-11-02" },
+    { id: "WO-3112", product: "CogniSense", agent: "Work-order agent", asset: "Conveyor gearbox GB-18", plant: "Station 1", action: "Oil change; gear inspection", target_system: "SAP PM", status: "Approved", created: "2026-11-01" },
+    { id: "WO-3111", product: "CogniSense", agent: "Work-order agent", asset: "Exhaust blower EB-5", plant: "Station 2", action: "Tighten foundation bolts; re-check", target_system: "Maximo", status: "Approved", created: "2026-10-31" },
+    { id: "REP-0098", product: "Factory OS", agent: "Reporting agent", asset: "All assets", plant: ALL, action: "October reliability quality safety and ESG report", target_system: "Email", status: "Executed", created: "2026-11-01" },
   ],
 
   agents: [
@@ -179,16 +190,15 @@ const data = {
   ],
 
   activity: [
-    { at: "2026-11-05 10:42", agent: "Quality agent", product: "CogniVision Inspect", plant: "Chakan", event: "Drafted NCR-0871 for porosity on Line 4 Piston; 240 units on hold pending approval" },
-    { at: "2026-11-05 10:31", agent: "Root-cause agent", product: "Factory OS", plant: "Chakan", event: "Linked Line 4 dimensional defects to spindle SM-07 misalignment (r = 0.81)" },
-    { at: "2026-11-05 09:58", agent: "Work-order agent", product: "CogniSense", plant: "Hosur", event: "Drafted WO-3118 bearing replacement for Compressor C-204 with parts and LOTO steps" },
-    { at: "2026-11-05 09:58", agent: "Spares agent", product: "CogniSense", plant: "Hosur", event: "Stock check: SKF 6314 not in stock; drafted PR-0442 with 14-day lead" },
-    { at: "2026-11-05 09:12", agent: "Safety agent", product: "CogniVision Insight", plant: "Hosur", event: "Drafted EHS-0334: 5 forklift near-misses in Dispatch yard clustered at shift change" },
-    { at: "2026-11-05 08:30", agent: "Data-quality agent", product: "CogniSense", plant: "Dubai JAFZA", event: "Flagged HVAC BMS feed degraded: 18 min since last sync; diagnoses on AHU assets suppressed" },
-    { at: "2026-11-05 08:05", agent: "Camera-health agent", product: "CogniVision Insight", plant: "Hosur", event: "Camera DY-07 lens occluded; marked out of service and notified facilities" },
-    { at: "2026-11-05 07:40", agent: "Fleet triage", product: "CogniSense", plant: "All plants", event: "Nightly ranking complete; Compressor C-204 moved to rank 1" },
-    { at: "2026-11-05 07:15", agent: "Context agent", product: "Factory OS", plant: "All plants", event: "Pulled 61 closed work orders from SAP PM and Maximo; 37 verified against original diagnosis" },
-    { at: "2026-11-05 06:00", agent: "Connector agent", product: "Factory OS", plant: "Chakan", event: "Proposed tag mapping for new Rockwell PLC on Line 5: 142 tags to 9 asset models awaiting engineer confirmation" },
+    { at: "2026-11-05 10:42", agent: "Quality agent", product: "CogniVision Inspect", plant: "Station 4", event: "Drafted NCR-0871 for porosity on Line 4 Piston; 240 units on hold pending approval" },
+    { at: "2026-11-05 10:31", agent: "Root-cause agent", product: "Factory OS", plant: "Station 4", event: "Linked Line 4 dimensional defects to spindle SM-07 misalignment (r = 0.81)" },
+    { at: "2026-11-05 09:58", agent: "Work-order agent", product: "CogniSense", plant: "Station 1", event: "Drafted WO-3118 bearing replacement for Compressor C-204 with parts and LOTO steps" },
+    { at: "2026-11-05 09:58", agent: "Spares agent", product: "CogniSense", plant: "Station 1", event: "Stock check: SKF 6314 not in stock; drafted PR-0442 with 14-day lead" },
+    { at: "2026-11-05 09:12", agent: "Safety agent", product: "CogniVision Insight", plant: "Station 1", event: "Drafted EHS-0334: 5 forklift near-misses in Dispatch yard clustered at shift change" },
+    { at: "2026-11-05 08:30", agent: "Data-quality agent", product: "CogniSense", plant: "Station 3", event: "Flagged HVAC BMS feed degraded: 18 min since last sync; diagnoses on AHU assets suppressed" },
+    { at: "2026-11-05 08:05", agent: "Camera-health agent", product: "CogniVision Insight", plant: "Station 1", event: "Camera DY-07 lens occluded; marked out of service and notified facilities" },
+    { at: "2026-11-05 07:15", agent: "Context agent", product: "Factory OS", plant: ALL, event: "Pulled 61 closed work orders from SAP PM and Maximo; 37 verified against original diagnosis" },
+    { at: "2026-11-05 06:00", agent: "Connector agent", product: "Factory OS", plant: "Station 2", event: "Proposed tag mapping for new Rockwell PLC on Line 5: 142 tags to 9 asset models awaiting engineer confirmation" },
   ],
 };
 
@@ -260,7 +270,7 @@ function reason({ proposals, inPlant, product }) {
       id: `retrain-${l.line}`, product: "CogniVision Inspect", plant: l.plant, prio: "med", score: 60,
       title: `${l.line}: retrain the ${l.model_version} model before false rejects climb`,
       why: [
-        `Drift ${l.drift}; accuracy ${l.model_accuracy}% against a 99.3% fleet median`,
+        `Drift ${l.drift}; accuracy ${l.model_accuracy}% against a 99.3%`,
         `${fC(l.inspected_24h)} units a day pass this model`,
       ],
       impact: "Restores accuracy and cuts false rejects, which are scrap you did not need to make",
@@ -351,7 +361,7 @@ function reason({ proposals, inPlant, product }) {
   }
 
   return out
-    .filter((s) => inPlant(s.plant || "All plants") && (!product || s.product === product))
+    .filter((s) => inPlant(s.plant || ALL) && (!product || s.product === product))
     .sort((a, b) => (a.prio === "high" ? 0 : 1) - (b.prio === "high" ? 0 : 1) || b.score - a.score);
 }
 
@@ -365,13 +375,13 @@ function answer(question, { proposals, suggestions }) {
     (a) => t.includes(a.asset.toLowerCase().split(" ")[0]) || t.includes(a.asset.toLowerCase())
   );
   const area = data.insight_areas.find((a) => t.includes(a.area.toLowerCase()));
-  const plantKey = ["hosur", "chakan", "dubai"].find((p) => t.includes(p));
+  const stationKey = STATIONS.find((s) => t.includes(s.toLowerCase()) || t.includes(s.toLowerCase().replace(" ", "")));
 
   if (line) {
     const rc = data.rootcause.find((r) => r.signal_a.includes(line.line.split(" ").slice(0, 2).join(" ")));
     const d = data.inspect_defects.find((x) => x.top_line === line.line);
     return [
-      `${line.line} ran ${fC(line.inspected_24h)} units in 24 h at ${line.defect_rate}% defects (yield ${line.yield}%). Model ${line.model_version} is at ${line.model_accuracy}% with ${line.drift.toLowerCase()} drift.`,
+      `${line.line} (${line.plant}) ran ${fC(line.inspected_24h)} units in 24 h at ${line.defect_rate}% defects (yield ${line.yield}%). Model ${line.model_version} is at ${line.model_accuracy}% with ${line.drift.toLowerCase()} drift.`,
       d ? `The leading defect is ${d.defect_type.toLowerCase()}: ${d.count_7d} this week vs ${d.prior_7d} last week.` : "",
       rc ? `Most likely cause: ${rc.signal_b} (r = ${f2(rc.correlation)}). ${rc.finding}.` : "No machine-health correlation yet; the root-cause agent re-runs nightly.",
       line.status === "Retrain"
@@ -397,14 +407,16 @@ function answer(question, { proposals, suggestions }) {
     }`;
   }
 
-  if (plantKey) {
-    const plant = { hosur: "Hosur", chakan: "Chakan", dubai: "Dubai JAFZA" }[plantKey];
-    const top = data.triage.filter((r) => r.plant === plant).sort((a, b) => a.rank - b.rank)[0];
-    const pend = proposals.filter((p) => p.plant === plant && p.status === "Pending");
-    const bad = data.insight_areas.filter((a) => a.plant === plant && a.status !== "OK");
-    return `${plant} first: approve the ${pend.length} pending proposals (${pend.slice(0, 3).map((p) => p.id).join(", ")}${pend.length > 3 ? "…" : ""}). The highest-risk machine is ${top.asset} (${top.fault.toLowerCase()}, RUL ${top.rul_days} d).${
+  if (stationKey) {
+    const station = stationKey;
+    const top = data.triage.filter((r) => r.plant === station).sort((a, b) => a.rank - b.rank)[0];
+    const pend = proposals.filter((p) => p.plant === station && p.status === "Pending");
+    const bad = data.insight_areas.filter((a) => a.plant === station && a.status !== "OK");
+    return `${station} first: approve the ${pend.length} pending proposals${pend.length ? ` (${pend.slice(0, 3).map((p) => p.id).join(", ")}${pend.length > 3 ? "…" : ""})` : ""}. ${
+      top ? `The highest-risk machine is ${top.asset} (${top.fault.toLowerCase()}, RUL ${top.rul_days} d).` : "No machines are flagged."
+    }${
       bad.length ? ` Safety: ${bad.map((a) => `${a.area} is ${a.status.toLowerCase()}`).join(", ")}.` : ""
-    } The copilot cards above are already filtered when you pick the plant.`;
+    } The copilot cards above are already filtered when you pick the station.`;
   }
 
   if (t.includes("first") || t.includes("priorit") || t.includes("today")) {
@@ -419,7 +431,7 @@ function answer(question, { proposals, suggestions }) {
       : "All integrations are healthy.";
   }
 
-  return 'I can answer about a machine, an inspection line, a CCTV area, a plant, integrations, or what to do first. Try "why is Line 4 defect rate up" or "what should Hosur do first".';
+  return 'I can answer about a machine, an inspection line, a CCTV area, a station, integrations, or what to do first. Try "why is Line 4 defect rate up" or "what should Station 1 do first".';
 }
 
 /* ======================================================================
@@ -592,6 +604,92 @@ function LoopFunnel({ rows }) {
 }
 
 /* ======================================================================
+   Station breakdown (TIEI divided into Station 1-4)
+   ====================================================================== */
+function StationBreakdown({ proposals, station, onStation }) {
+  const rows = STATIONS.map((s) => {
+    const assets = data.triage.filter((r) => r.plant === s).sort((a, b) => a.rank - b.rank);
+    const lines = data.inspect_lines.filter((l) => l.plant === s);
+    const areas = data.insight_areas.filter((a) => a.plant === s);
+    const inspected = lines.reduce((sum, l) => sum + l.inspected_24h, 0);
+    const defectRate = inspected
+      ? lines.reduce((sum, l) => sum + l.defect_rate * l.inspected_24h, 0) / inspected
+      : 0;
+    return {
+      name: s,
+      top: assets[0],
+      assets: assets.length,
+      lines: lines.length,
+      inspected,
+      defectRate,
+      pending: proposals.filter((p) => p.plant === s && p.status === "Pending").length,
+      nearMisses: areas.reduce((sum, a) => sum + a.near_misses_7d, 0),
+      alerts: areas.filter((a) => a.status !== "OK").length,
+    };
+  });
+
+  return (
+    <Card
+      title={`${SITE} by station`}
+      note="The site split into its four stations. Click a station to filter the whole page; click it again to go back to the full site."
+    >
+      <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
+        {rows.map((r) => {
+          const active = station === r.name;
+          return (
+            <button
+              key={r.name}
+              type="button"
+              onClick={() => onStation(active ? "" : r.name)}
+              className={`rounded-xl border p-3.5 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 ${
+                active ? "border-slate-800 bg-slate-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[14px] font-semibold text-slate-900">{r.name}</span>
+                <span
+                  className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+                    r.pending ? "border-amber-200 bg-amber-50 text-amber-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  }`}
+                >
+                  {r.pending} pending
+                </span>
+              </div>
+              <dl className="mt-2.5 space-y-1 text-xs text-slate-600">
+                <div className="flex justify-between gap-2">
+                  <dt className="text-slate-500">Highest-risk machine</dt>
+                  <dd className="text-right font-medium text-slate-800">{r.top ? `${r.top.asset} (${r.top.risk_score})` : "None"}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-slate-500">Machines tracked</dt>
+                  <dd className="font-medium text-slate-800">{r.assets}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-slate-500">Inspection lines</dt>
+                  <dd className="font-medium text-slate-800">{r.lines}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-slate-500">Defect rate, 24 h</dt>
+                  <dd className="font-medium text-slate-800">{r.lines ? `${f2(r.defectRate)}%` : "n/a"}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-slate-500">Near-misses, 7 d</dt>
+                  <dd className="font-medium text-slate-800">{r.nearMisses}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-slate-500">Areas on watch or alert</dt>
+                  <dd className={`font-medium ${r.alerts ? "text-rose-600" : "text-slate-800"}`}>{r.alerts}</dd>
+                </div>
+              </dl>
+            </button>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+/* ======================================================================
    Copilot panel
    ====================================================================== */
 const FILTERS = ["CogniSense", "CogniVision Inspect", "CogniVision Insight", "Factory OS"];
@@ -686,7 +784,7 @@ function Copilot({ suggestions, proposals, product, onProduct, drafted, onDraft 
         <input
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          placeholder="Ask the copilot, e.g. why is Line 4 defect rate up, or what should Hosur do first"
+          placeholder="Ask the copilot, e.g. why is Line 4 defect rate up, or what should Station 1 do first"
           aria-label="Ask the copilot"
           className="min-w-[220px] flex-1 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-800 placeholder-slate-400 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
         />
@@ -737,6 +835,7 @@ function ApprovalQueue({ rows, pendingCount, product, onProduct, status, onStatu
               <th className="px-3 py-2.5">ID</th>
               <th className="px-3 py-2.5">Product</th>
               <th className="hidden px-3 py-2.5 md:table-cell">Agent</th>
+              <th className="px-3 py-2.5">Station</th>
               <th className="px-3 py-2.5">Asset or area</th>
               <th className="px-3 py-2.5">Proposed action</th>
               <th className="hidden px-3 py-2.5 lg:table-cell">Target</th>
@@ -747,7 +846,7 @@ function ApprovalQueue({ rows, pendingCount, product, onProduct, status, onStatu
           <tbody className="divide-y divide-slate-100 text-slate-700">
             {rows.length === 0 && (
               <tr>
-                <td colSpan={8} className="py-10 text-center text-slate-400">
+                <td colSpan={9} className="py-10 text-center text-slate-400">
                   <InboxOutlined className="mb-1 block text-2xl" />
                   Nothing waiting. Clear a filter to see decided proposals.
                 </td>
@@ -762,6 +861,7 @@ function ApprovalQueue({ rows, pendingCount, product, onProduct, status, onStatu
                   </span>
                 </td>
                 <td className="hidden px-3 py-2.5 md:table-cell">{p.agent}</td>
+                <td className="whitespace-nowrap px-3 py-2.5">{p.plant}</td>
                 <td className="px-3 py-2.5">{p.asset}</td>
                 <td className="min-w-[220px] px-3 py-2.5">{p.action}</td>
                 <td className="hidden px-3 py-2.5 lg:table-cell">{p.target_system}</td>
@@ -831,7 +931,10 @@ function RootCauseTable({ rows }) {
                     <td className="px-3 py-2.5">
                       <span className="flex items-start gap-1.5">
                         <span className="mt-1 text-[10px] text-slate-400">{isOpen ? <DownOutlined /> : <RightOutlined />}</span>
-                        <span><ProductDot product={r.product_a} className="mr-1.5" />{r.signal_a}</span>
+                        <span>
+                          <ProductDot product={r.product_a} className="mr-1.5" />{r.signal_a}
+                          <span className="ml-1.5 text-[11px] text-slate-400">· {r.plant}</span>
+                        </span>
                       </span>
                     </td>
                     <td className="px-3 py-2.5"><ProductDot product={r.product_b} className="mr-1.5" />{r.signal_b}</td>
@@ -924,7 +1027,7 @@ function IntegrationHealth({ integrations }) {
       note="Every backward and forward connection the agents depend on. A degraded backward feed suppresses diagnoses on its assets; a failed forward system queues proposals until it returns."
       className="col-span-full"
     >
-      <Group label="Backward: plant data into Factory OS" items={integrations.filter((i) => i.direction === "Backward")} />
+      <Group label="Backward: station data into Factory OS" items={integrations.filter((i) => i.direction === "Backward")} />
       <Group label="Forward: Factory OS into customer systems" items={integrations.filter((i) => i.direction === "Forward")} />
     </Card>
   );
@@ -933,36 +1036,42 @@ function IntegrationHealth({ integrations }) {
 /* ======================================================================
    Header
    ====================================================================== */
-const PLANTS = [
-  { value: "", label: "All plants" },
-  { value: "Hosur", label: "Hosur" },
-  { value: "Chakan", label: "Chakan" },
-  { value: "Dubai JAFZA", label: "Dubai JAFZA" },
+const STATION_OPTIONS = [
+  { value: "", label: `${SITE} (all)` },
+  ...STATIONS.map((s) => ({ value: s, label: s })),
 ];
 
-function Header({ pendingCount, topAsset, badIntegrations, plant, onPlant, query, onQuery, searchRef }) {
+function Header({ pendingCount, topAsset, badIntegrations, station, onStation, query, onQuery, searchRef }) {
   return (
     <header className="flex flex-wrap items-start justify-between gap-4 px-4 pt-2 sm:px-6">
       <div className="min-w-0">
-        <h1 className="text-[22px] font-semibold tracking-tight text-slate-900">Plant command console</h1>
+        <h1 className="text-[22px] font-semibold tracking-tight text-slate-900">
+          {SITE} command console{station ? ` · ${station}` : ""}
+        </h1>
         <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-500">
           Today across CogniSense, Inspect and Insight:{" "}
-          <b className="font-semibold text-slate-900">{pendingCount} proposals</b> are waiting for a human, the highest-risk
-          machine is <b className="font-semibold text-slate-900">{topAsset.asset} ({topAsset.plant})</b>, and{" "}
+          <b className="font-semibold text-slate-900">{pendingCount} proposals</b> are waiting for a human,{" "}
+          {topAsset ? (
+            <>
+              the highest-risk machine is <b className="font-semibold text-slate-900">{topAsset.asset} ({topAsset.plant})</b>, and{" "}
+            </>
+          ) : (
+            <>no machine is flagged at risk here, and </>
+          )}
           <b className={`font-semibold ${badIntegrations ? "text-rose-600" : "text-slate-900"}`}>{badIntegrations} integrations</b>{" "}
           need attention.
         </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div role="group" aria-label="Plant" className="inline-flex rounded-full border border-slate-200 bg-white p-1 shadow-sm">
-          {PLANTS.map((p) => (
+        <div role="group" aria-label="Station" className="inline-flex flex-wrap rounded-full border border-slate-200 bg-white p-1 shadow-sm">
+          {STATION_OPTIONS.map((p) => (
             <button
               key={p.label}
               type="button"
-              onClick={() => onPlant(p.value)}
+              onClick={() => onStation(p.value)}
               className={`rounded-full px-3 py-1.5 text-[13px] transition ${
-                plant === p.value ? "bg-slate-800 font-medium text-white" : "text-slate-600 hover:bg-slate-100"
+                station === p.value ? "bg-slate-800 font-medium text-white" : "text-slate-600 hover:bg-slate-100"
               }`}
             >
               {p.label}
@@ -1012,7 +1121,7 @@ const kpi = (metric) => data.kpis.find((k) => k.metric === metric);
 const defectSpark = data.sparks.defects.map((d, i) => (d / data.sparks.inspected[i]) * 100);
 
 export default function Overview() {
-  const [plant, setPlant] = useState("");
+  const [station, setStation] = useState("");
   const [query, setQuery] = useState("");
   const [proposals, setProposals] = useState(data.proposals);
   const [qProduct, setQProduct] = useState("");
@@ -1023,7 +1132,7 @@ export default function Overview() {
   const searchRef = useRef(null);
 
   const q = query.trim().toLowerCase();
-  const inPlant = useCallback((p) => !plant || p === plant || p === "All plants", [plant]);
+  const inPlant = useCallback((p) => !station || p === station || p === ALL, [station]);
   const matches = useCallback((...s) => !q || s.join(" ").toLowerCase().includes(q), [q]);
 
   // "/" focuses search, Esc clears it
@@ -1082,7 +1191,7 @@ export default function Overview() {
         inPlant(p.plant) &&
         (!qProduct || p.product === qProduct) &&
         (!qStatus || p.status === qStatus) &&
-        matches(p.asset, p.action, p.id)
+        matches(p.asset, p.action, p.id, p.plant)
     )
     .sort(
       (a, b) =>
@@ -1097,7 +1206,7 @@ export default function Overview() {
     .filter((r) => inPlant(r.plant) && matches(r.event, r.agent))
     .sort((a, b) => b.at.localeCompare(a.at));
 
-  const topAsset = [...data.triage].sort((a, b) => a.rank - b.rank)[0];
+  const topAsset = [...data.triage].filter((r) => inPlant(r.plant)).sort((a, b) => a.rank - b.rank)[0];
   const badIntegrations = data.integrations.filter((i) => i.status !== "OK").length;
 
   const tile = (metric, label, opts) => {
@@ -1112,8 +1221,8 @@ export default function Overview() {
           pendingCount={pendingCount()}
           topAsset={topAsset}
           badIntegrations={badIntegrations}
-          plant={plant}
-          onPlant={setPlant}
+          station={station}
+          onStation={setStation}
           query={query}
           onQuery={setQuery}
           searchRef={searchRef}
@@ -1130,13 +1239,15 @@ export default function Overview() {
 
           {/* KPI tiles */}
           <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(170px,1fr))]">
-            {tile("fleet_health", "Fleet health score", { color: "#0d9488", spark: data.sparks.health })}
             {tile("defect_rate", "Defect rate, %", { color: "#d97706", spark: defectSpark, decimals: 2, betterWhen: "down" })}
             {tile("safety_events", "Safety events, 7 d", { color: "#7c3aed", spark: data.sparks.safety, betterWhen: "down" })}
             {tile("open_proposals", "Open proposals", { color: "#64748b", betterWhen: "down" })}
             {tile("downtime_avoided_hours", "Downtime avoided, h", { color: "#0d9488", spark: data.sparks.actions })}
             {tile("verified_closures", "Closures verified, %", { color: "#64748b" })}
           </div>
+
+          {/* TIEI divided into stations */}
+          <StationBreakdown proposals={proposals} station={station} onStation={setStation} />
 
           {/* Copilot */}
           <Copilot

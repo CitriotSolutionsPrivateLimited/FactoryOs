@@ -10,6 +10,8 @@ import {
     DashboardOutlined,
     ToolOutlined,
     FileTextOutlined,
+    BarChartOutlined,
+    ExperimentOutlined,
 } from '@ant-design/icons';
 import useScreenType from 'react-screentype-hook';
 import PrivateRoute from '../layouts/PrivateRoute';
@@ -17,8 +19,10 @@ import Dashboard from './dashboard';
 import Cognisense from './cognisense/cognisense';
 import AddMachine from './cognisense/addmachine';
 import CognivisionInspect from './cognivisionInspect';
-import CognivisionInsight from './cognivisionInsights';
+import CognivisionInsight from './cognivision/cognivisionInsights';
 import AgentsIntegrations from './agentsIntegration';
+import WordOrder from './cognisense/workorder';
+import ModalTrain from './cognivision/modalTrain';
 
 const { Content, Sider } = Layout;
 
@@ -33,8 +37,9 @@ const COLORS = {
     agents: '#64748b',
 };
 
-// Key of the CogniSense parent menu (it only expands/collapses, it has no page of its own)
+// Keys of the parent menus (they only expand/collapse, they have no page of their own)
 const SENSE_GROUP_KEY = 'cognisense-group';
+const INSIGHT_GROUP_KEY = 'cognivision-insight-group';
 
 const ComingSoon = ({ title }) => (
     <div className="p-6 text-sm text-slate-500">{title} page is not built yet.</div>
@@ -82,7 +87,7 @@ const Home = ({ path }) => {
                 const tempItems = [
                     getItem('Overview', `${path}/dashboard`, <AppstoreOutlined style={{ color: COLORS.overview }} />),
 
-                    // CogniSense now has sub modules
+                    // CogniSense: 3 sub modules
                     getItem(
                         'CogniSense',
                         SENSE_GROUP_KEY,
@@ -95,7 +100,18 @@ const Home = ({ path }) => {
                     ),
 
                     getItem('CogniVision Inspect', `${path}/cognivision-inspect`, <ScanOutlined style={{ color: COLORS.inspect }} />),
-                    getItem('CogniVision Insight', `${path}/cognivision-insight`, <VideoCameraOutlined style={{ color: COLORS.insight }} />),
+
+                    // CogniVision Insight: 2 sub modules
+                    getItem(
+                        'CogniVision Insight',
+                        INSIGHT_GROUP_KEY,
+                        <VideoCameraOutlined style={{ color: COLORS.insight }} />,
+                        [
+                            getItem('Insights', `${path}/cognivision-insight`, <BarChartOutlined style={{ color: COLORS.insight }} />),
+                            getItem('Model Train', `${path}/cognivision-insight/modeltrain`, <ExperimentOutlined style={{ color: COLORS.insight }} />),
+                        ]
+                    ),
+
                     getItem('Agents and integrations', `${path}/agents-integrations`, <ApiOutlined style={{ color: COLORS.agents }} />),
                 ];
 
@@ -116,15 +132,18 @@ const Home = ({ path }) => {
         }
     }, [path, navigate]);
 
-    // Keep the highlighted item (and the open CogniSense group) in sync with the URL,
-    // so it also works with the browser back/forward buttons and direct links.
     useEffect(() => {
         const current = location.pathname.replace(/\/+$/, '');
         if (current && current !== path) {
             setSelectedMenu([current]);
         }
-        if (current.startsWith(`${path}/cognisense`)) {
-            setOpenKeys((prev) => (prev.includes(SENSE_GROUP_KEY) ? prev : [...prev, SENSE_GROUP_KEY]));
+
+        const groupsToOpen = [];
+        if (current.startsWith(`${path}/cognisense`)) groupsToOpen.push(SENSE_GROUP_KEY);
+        if (current.startsWith(`${path}/cognivision-insight`)) groupsToOpen.push(INSIGHT_GROUP_KEY);
+
+        if (groupsToOpen.length) {
+            setOpenKeys((prev) => Array.from(new Set([...prev, ...groupsToOpen])));
         }
     }, [location.pathname, path]);
 
@@ -213,12 +232,19 @@ const Home = ({ path }) => {
                     >
                         <Routes>
                             <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+
+                            {/* CogniSense */}
                             <Route path="/cognisense" element={<PrivateRoute><Cognisense /></PrivateRoute>} />
                             <Route path="/cognisense/addmachine" element={<PrivateRoute><AddMachine /></PrivateRoute>} />
-                            {/* Replace ComingSoon with your Work Order component when it's ready */}
-                            <Route path="/cognisense/workorder" element={<PrivateRoute><ComingSoon title="Work Order" /></PrivateRoute>} />
+                            <Route path="/cognisense/workorder" element={<PrivateRoute><WordOrder /></PrivateRoute>} />
+
                             <Route path="/cognivision-inspect" element={<PrivateRoute><CognivisionInspect /></PrivateRoute>} />
+
+                            {/* CogniVision Insight */}
                             <Route path="/cognivision-insight" element={<PrivateRoute><CognivisionInsight /></PrivateRoute>} />
+                            {/* Replace ComingSoon with your Model Train component when it's ready */}
+                            <Route path="/cognivision-insight/modeltrain" element={<PrivateRoute><ModalTrain /></PrivateRoute>} />
+
                             <Route path="/agents-integrations" element={<PrivateRoute><AgentsIntegrations /></PrivateRoute>} />
                         </Routes>
                     </Content>
