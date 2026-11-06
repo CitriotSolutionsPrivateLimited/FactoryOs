@@ -27,10 +27,8 @@ import ModalTrain from './cognivision/modalTrain';
 
 const { Content, Sider } = Layout;
 
-const LOGO_SRC = '/citriotlogo.jpeg'; // file must be in your /public folder
 
-// Route of your login page
-const LOGIN_PATH = '/login';
+const LOGO_SRC = '/citriotlogo.jpeg'; // file must be in your /public folder
 
 // Colours match the Overview page (CogniSense teal, Inspect amber, Insight violet)
 const COLORS = {
@@ -88,6 +86,7 @@ const Home = ({ path }) => {
             'isLoggedIn',
             'firstName'
         ];
+        console.log("hii")
 
         keysToRemove.forEach((key) => {
             localStorage.removeItem(key);
