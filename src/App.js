@@ -1,24 +1,77 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useReducer } from 'react';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate
+} from 'react-router-dom';
+
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+import { RootContext } from './context/RootContext';
+import rootReducer from './reducers/rootReducer';
+import PrivateRoute from './layouts/PrivateRoute';
+import Login from './components/auth/login';
+import Home from './components/home';
 
 function App() {
+
+  const initalState = {
+    auth: {
+      isLoggedIn: false,
+      user: null
+    },
+  };
+
+  const [state, dispatch] = useReducer(
+    rootReducer(initalState),
+    initalState
+  );
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <RootContext.Provider value={{ ...state, dispatch }}>
+      <Router>
+
+        {/* Socket notification listener */}
+
+        {/* Toast notification display */}
+        <ToastContainer
+          position="top-center"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          pauseOnHover
+          draggable
+          style={{ zIndex: 999999 }}
+        />
+
+        <Routes>
+
+          <Route
+            path="/login"
+            element={<Login />}
+          />
+
+          <Route
+            path="/home/*"
+            element={
+              <PrivateRoute>
+                <Home path="/home" />
+              </PrivateRoute>
+            }
+          />
+
+           <Route
+            path="/"
+            element={<Navigate to="/login" replace />}
+          />
+
+        </Routes>
+
+      </Router>
+    </RootContext.Provider>
   );
 }
 

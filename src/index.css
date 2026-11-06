@@ -1,13 +1,140 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800;900&family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu+Mono&family=Ubuntu:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Maven+Pro:wght@500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components{
+    .bannerIcon{
+        @apply w-16 h-16 bg-black bg-opacity-25 text-gray-200 text-xl inline-flex items-center justify-center rounded-md shadow-shadowOne hover:bg-opacity-40 hover:-translate-y-1 transition-all hover:text-designColor cursor-pointer duration-300;
+    }
+    .resumeLi {
+    @apply w-full h-20 bg-black bg-opacity-25 text-xl text-gray-300 flex justify-center cursor-pointer hover:bg-opacity-40 duration-300 items-center border-[1px] rounded-none;
+        }
+    .bgOpacity {
+    @apply bg-black bg-opacity-40;
+    }
+    .contactInput{
+        @apply w-full h-12 rounded-lg border-b-[1px] border-b-gray-600 bg-[#191b1e] text-lightText px-4 active:outline-none focus-visible:outline-designColor outline-none focus-visible:border-b-transparent duration-300
+    }
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
+    .active {
+        color: white;
+    }
+
+    .scrollbar-hide::-webkit-scrollbar{
+        display: none;
+    }
+
+    @layer base {
+        html {
+            font-family: Ubuntu;
+        }
+    }
+    .ant-carousel {
+        .slick-next {
+        &::before {
+        content: 'Previous';
+        }
+        }
+        .slick-prev {
+        &::before {
+        content: 'Next';
+        }
+        }
+    };
+    
+    .ant-btn {
+        text-transform: uppercase;
+    }
+    .ant-btn-link {
+        text-transform: none;
+    }
+    
+    .ant-btn-register {
+        background: transparent linear-gradient(90deg,#f3e8e8, #1FA2FF);
+        border: none;
+        font-weight: 600;
+    }
+
+    .ant-btn-login {
+        background: transparent linear-gradient(90deg,#20BDFF 0%, #fff 100%);
+        border: none;
+        font-weight: 600;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    
+    .ant-btn-login:hover,
+    .ant-btn-register:hover {
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.8);
+    }
+
+    .wow {
+       background: linear-gradient(90deg,#1FA2FF, #12D8FA,#A6FFCB)
+    }
+    
+    .ant-form-item {
+        margin-bottom: 10px;
+    }
+
+    .icons{
+       text-decoration: linear-gradient(90deg,#1FA2FF, #12D8FA,#A6FFCB)
+    }
+
+    .ant-table-wrapper {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 6px 6px 30px #D0D3D64D;
+    }
+    
+
+    .ant-layout-sider-trigger {
+        background: transparent linear-gradient(90deg, #0cebeb 0%, #12D8FA 50%, #1FA2FF  100%) 0% 0% no-repeat padding-box !important;
+    }
+
+    .ant-layout-content {
+        background: #F7FAFC;
+    }
+
+    .item:hover,
+    .item-selected {
+        color: #05aeed !important;
+    }
+
+    .item svg {
+        justify-items: center !important;
+        margin-top: 12px !important;
+        margin-right: 20px !important;
+        transform: scale(1.6) !important;
+    }
+
+    .itemBoss-inline .item::after{
+        width: 5px;
+        border-radius: 50px;
+        border: none;
+        background: transparent linear-gradient(90deg, #0cebeb 0%, #20e3b2 50%, #29ffc6  100%) 0% 0% no-repeat padding-box !important;
+    }
+
+    .ant-menu-horizontal {
+     border-bottom: 0px;   
+    }
+
+    .ant-btn-pop {
+        background: #20BDFF;
+        border: none;
+        }
+
+    .ant-table-content {
+        overflow: auto hidden;
+        }
+    .ant-table-cell {
+        min-width: 120px;
+    }
+
+    .ant-btn-primary {
+        background: #20BDFF;
+      }
