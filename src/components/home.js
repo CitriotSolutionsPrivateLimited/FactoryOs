@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Layout, Menu, message } from 'antd';
 import {
     AppstoreOutlined,
@@ -7,6 +7,9 @@ import {
     ScanOutlined,
     VideoCameraOutlined,
     ApiOutlined,
+    DashboardOutlined,
+    ToolOutlined,
+    FileTextOutlined,
 } from '@ant-design/icons';
 import useScreenType from 'react-screentype-hook';
 import PrivateRoute from '../layouts/PrivateRoute';
@@ -29,6 +32,9 @@ const COLORS = {
     insight: '#7c3aed',
     agents: '#64748b',
 };
+
+// Key of the CogniSense parent menu (it only expands/collapses, it has no page of its own)
+const SENSE_GROUP_KEY = 'cognisense-group';
 
 const ComingSoon = ({ title }) => (
     <div className="p-6 text-sm text-slate-500">{title} page is not built yet.</div>
@@ -58,46 +64,43 @@ const BrandLogo = () => {
 
 const Home = ({ path }) => {
     const [selectedMenu, setSelectedMenu] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [openKeys, setOpenKeys] = useState([]);
     const [items, setItems] = useState([]);
     const [collapsed, setCollapsed] = useState(false);
-    const [isFirstLogin, setIsFirstLogin] = useState(false);
 
     const screenType = useScreenType();
     const navigate = useNavigate();
-    const citriot = JSON.parse(localStorage.getItem('citriot'));
-    const firstName = localStorage.getItem('firstName');
+    const location = useLocation();
 
     function getItem(label, key, icon, children, className) {
         return { key, icon, children, label, className };
     }
 
     useEffect(() => {
-        // Check if this is first login
-        const hasVisitedBefore = localStorage.getItem('hasVisitedBefore');
-        if (!hasVisitedBefore) {
-            setIsFirstLogin(true);
-            localStorage.setItem('hasVisitedBefore', 'true');
-        }
-    }, []);
-
-    useEffect(() => {
         const getOrganisations = async () => {
             try {
-                setLoading(true);
-
                 const tempItems = [
                     getItem('Overview', `${path}/dashboard`, <AppstoreOutlined style={{ color: COLORS.overview }} />),
-                    getItem('CogniSense', `${path}/cognisense`, <ThunderboltOutlined style={{ color: COLORS.sense }} />),
+
+                    // CogniSense now has sub modules
+                    getItem(
+                        'CogniSense',
+                        SENSE_GROUP_KEY,
+                        <ThunderboltOutlined style={{ color: COLORS.sense }} />,
+                        [
+                            getItem('Cognisense', `${path}/cognisense`, <DashboardOutlined style={{ color: COLORS.sense }} />),
+                            getItem('Machines', `${path}/cognisense/addmachine`, <ToolOutlined style={{ color: COLORS.sense }} />),
+                            getItem('Work Order', `${path}/cognisense/workorder`, <FileTextOutlined style={{ color: COLORS.sense }} />),
+                        ]
+                    ),
+
                     getItem('CogniVision Inspect', `${path}/cognivision-inspect`, <ScanOutlined style={{ color: COLORS.inspect }} />),
                     getItem('CogniVision Insight', `${path}/cognivision-insight`, <VideoCameraOutlined style={{ color: COLORS.insight }} />),
                     getItem('Agents and integrations', `${path}/agents-integrations`, <ApiOutlined style={{ color: COLORS.agents }} />),
                 ];
 
                 setItems(tempItems);
-                setLoading(false);
             } catch (err) {
-                setLoading(false);
                 message.error(err.response?.data?.msg || 'Something went wrong');
             }
         };
@@ -113,20 +116,39 @@ const Home = ({ path }) => {
         }
     }, [path, navigate]);
 
+    // Keep the highlighted item (and the open CogniSense group) in sync with the URL,
+    // so it also works with the browser back/forward buttons and direct links.
+    useEffect(() => {
+        const current = location.pathname.replace(/\/+$/, '');
+        if (current && current !== path) {
+            setSelectedMenu([current]);
+        }
+        if (current.startsWith(`${path}/cognisense`)) {
+            setOpenKeys((prev) => (prev.includes(SENSE_GROUP_KEY) ? prev : [...prev, SENSE_GROUP_KEY]));
+        }
+    }, [location.pathname, path]);
+
     return (
         <>
             {/* Menu styling that matches the Overview design */}
             <style>{`
                 .factory-menu.ant-menu { background: transparent; border-inline-end: 0 !important; }
-                .factory-menu .ant-menu-item {
+                .factory-menu .ant-menu-item,
+                .factory-menu .ant-menu-submenu-title {
                     height: 40px; line-height: 40px; margin: 2px 0; border-radius: 8px;
                     color: #475569; font-size: 13.5px;
                 }
-                .factory-menu .ant-menu-item:hover { background: #f8fafc !important; color: #0f172a !important; }
+                .factory-menu .ant-menu-item:hover,
+                .factory-menu .ant-menu-submenu-title:hover { background: #f8fafc !important; color: #0f172a !important; }
                 .factory-menu .ant-menu-item-selected {
                     background: #f1f5f9 !important; color: #0f172a !important; font-weight: 600;
                 }
-                .factory-menu.ant-menu-inline-collapsed > .ant-menu-item { padding-inline: calc(50% - 8px); }
+                .factory-menu .ant-menu-sub.ant-menu-inline { background: transparent; }
+                .factory-menu .ant-menu-submenu-selected > .ant-menu-submenu-title { color: #0f172a; font-weight: 600; }
+                .factory-menu.ant-menu-inline-collapsed > .ant-menu-item,
+                .factory-menu.ant-menu-inline-collapsed > .ant-menu-submenu > .ant-menu-submenu-title {
+                    padding-inline: calc(50% - 8px);
+                }
             `}</style>
 
             <Layout>
@@ -165,6 +187,8 @@ const Home = ({ path }) => {
                                 className="factory-menu"
                                 mode="inline"
                                 selectedKeys={selectedMenu}
+                                openKeys={collapsed ? undefined : openKeys}
+                                onOpenChange={setOpenKeys}
                                 onSelect={({ key }) => {
                                     navigate(key);
                                     setSelectedMenu([key]);
@@ -191,6 +215,8 @@ const Home = ({ path }) => {
                             <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
                             <Route path="/cognisense" element={<PrivateRoute><Cognisense /></PrivateRoute>} />
                             <Route path="/cognisense/addmachine" element={<PrivateRoute><AddMachine /></PrivateRoute>} />
+                            {/* Replace ComingSoon with your Work Order component when it's ready */}
+                            <Route path="/cognisense/workorder" element={<PrivateRoute><ComingSoon title="Work Order" /></PrivateRoute>} />
                             <Route path="/cognivision-inspect" element={<PrivateRoute><CognivisionInspect /></PrivateRoute>} />
                             <Route path="/cognivision-insight" element={<PrivateRoute><CognivisionInsight /></PrivateRoute>} />
                             <Route path="/agents-integrations" element={<PrivateRoute><AgentsIntegrations /></PrivateRoute>} />
